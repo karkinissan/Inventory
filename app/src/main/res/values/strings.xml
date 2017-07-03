@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Inventory</string>
+    <!--Label for title of Editor Activity-->
+    <string name="title_editor">Add a Product</string>
+    <!-- Label for overflow menu option that inserts fake product data into the app [CHAR LIMIT=20] -->
+    <string name="action_insert_dummy_data">Insert Dummy Data</string>
+
+    <!-- Label for overflow menu option that deletes all products from the app [CHAR LIMIT=20] -->
+    <string name="action_delete_all_entries">Delete All Entries</string>
+    <!--Label for overflow menu option that saves a product-->
+    <string name="action_save">Save</string>
+    <!--Label for overflow menu option that deletes a product-->
+    <string name="action_delete">Delete</string>
+
+    <!--Quantity string for ProductCursor Adapter-->
+    <string name="quantity">Q: </string>
+
+    <!--Quantity string for ProductCursor Adapter-->
+    <string name="price">P: </string>
+
+</resources>

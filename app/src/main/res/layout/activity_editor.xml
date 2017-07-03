@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".EditorActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="4dp">
+
+        <TextView
+            style="@style/CategoryStyle"
+            android:text="Name" />
+
+        <EditText
+            android:id="@+id/edit_product_name"
+            style="@style/EditorFieldStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Product Name"
+            android:inputType="text" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="4dp">
+
+        <TextView
+            style="@style/CategoryStyle"
+            android:text="Quantity" />
+
+        <EditText
+            android:id="@+id/edit_product_quantity"
+            style="@style/EditorFieldStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="Quantity"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="4dp">
+
+        <TextView
+            style="@style/CategoryStyle"
+            android:text="Price" />
+
+        <EditText
+            android:id="@+id/edit_product_price"
+            style="@style/EditorFieldStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="Price"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="4dp">
+
+        <TextView
+            style="@style/CategoryStyle"
+            android:text="Supplier" />
+
+        <EditText
+            android:id="@+id/edit_product_supplier"
+            style="@style/EditorFieldStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="Supplier"
+            android:inputType="text" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="4dp">
+
+        <TextView
+            style="@style/CategoryStyle"
+            android:text="Image" />
+
+        <Button
+            android:id="@+id/image_picker_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pick Image" />
+
+        <ImageView
+            android:id="@+id/image_preview"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="Thumbnail for Image"
+            tools:src="@drawable/sugar"
+            android:scaleType="centerInside"
+            />
+
+    </LinearLayout>
+
+</LinearLayout>
