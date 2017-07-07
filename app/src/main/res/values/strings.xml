@@ -17,5 +17,8 @@
 
     <!--Quantity string for ProductCursor Adapter-->
     <string name="price">P: </string>
-
+    <string name="compose_shortcut_short_label1">Add</string>
+    <string name="compose_shortcut_long_label1">Add an Item</string>
+    <string name="compose_disabled_message1">Disabled</string>
+    <string name="dummy_data_inserted">Dummy Data Inserted</string>
 </resources>

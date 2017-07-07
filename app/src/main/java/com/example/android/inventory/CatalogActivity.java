@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -25,7 +26,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.android.inventory.data.ProductContract.ProductEntry;
 import com.example.android.inventory.data.ProductInsertionLoader;
@@ -50,6 +50,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+                intent.putExtra("fab", true);
                 startActivity(intent);
             }
         });
@@ -59,13 +60,13 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         listView.setEmptyView(textView);
         mCursorAdapter = new ProductCursorAdapter(this, null, getContentResolver());
         listView.setAdapter(mCursorAdapter);
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
                 Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
                 intent.setData(currentProductUri);
+                intent.putExtra("edit", true);
                 startActivity(intent);
             }
         });
@@ -239,7 +240,9 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         }*/
 //        new ProductInsertionLoader(this,getContentResolver(),values);
         //getLoaderManager().initLoader(INSERT_DUMMY_DATA_ID, null, this).forceLoad();
-        Toast.makeText(this, "Dummy Data Inserted", Toast.LENGTH_SHORT).show();
+        Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Dummy Data Inserted", Snackbar.LENGTH_SHORT);
+        snackbar.show();
+//        Toast.makeText(this, "Dummy Data Inserted", Toast.LENGTH_SHORT).show();
     }
 
     private ContentValues getContentValues(String name, int price, int quantity, String supplier, int resId) {
@@ -264,6 +267,17 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         //Converting the sugar thumbnail into a byte array.
         byte[] image = DbBitmapUtility.getBitmapAsByteArray(bitmap);
 
+        values.put(ProductEntry.COLUMN_IMAGE, image);
+        return values;
+    }
+
+    private ContentValues getContentValues(int id, String name, int price, int quantity, String supplier, byte[] image) {
+        ContentValues values = new ContentValues();
+        values.put(ProductEntry._ID, id);
+        values.put(ProductEntry.COLUMN_NAME, name);
+        values.put(ProductEntry.COLUMN_PRICE, price);
+        values.put(ProductEntry.COLUMN_QUANTITY, quantity);
+        values.put(ProductEntry.COLUMN_SUPPLIER, supplier);
         values.put(ProductEntry.COLUMN_IMAGE, image);
         return values;
     }
@@ -309,10 +323,31 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                ArrayList<Cursor> cursors = new ArrayList<Cursor>();
+                Cursor cursor = null;
                 for (long itemId : checkedItemIds) {
                     mCurrentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, itemId);
+                    String[] projection = {
+                            ProductEntry._ID,
+                            ProductEntry.COLUMN_NAME,
+                            ProductEntry.COLUMN_QUANTITY,
+                            ProductEntry.COLUMN_PRICE,
+                            ProductEntry.COLUMN_SUPPLIER,
+                            ProductEntry.COLUMN_IMAGE
+                    };
+                    cursor = getContentResolver().query(mCurrentProductUri,
+                            projection,
+                            null,
+                            null,
+                            null,
+                            null);
+                    cursor.moveToFirst();
+                    cursors.add(cursor);
                     deleteAllProducts(mCurrentProductUri);
                 }
+                Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator_layout), "Items Deleted", Snackbar.LENGTH_LONG);
+                snackbar.setAction("Undo", new MyUndoListener(cursors));
+                snackbar.show();
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -328,16 +363,23 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         return true;
     }
 
-    private class InventoryAsyncTask extends AsyncTask<ArrayList<ContentValues>, Void, Void> {
+    private class InventoryAsyncTask extends AsyncTask<ArrayList<ContentValues>, Void, Uri> {
 
         @Override
-        protected Void doInBackground(ArrayList<ContentValues>... params) {
+        protected Uri doInBackground(ArrayList<ContentValues>... params) {
             for (ContentValues value : params[0]) {
                 Uri uri = getContentResolver().insert(ProductEntry.CONTENT_URI, value);
                 Log.v(LOG_TAG, "Pet Inserted. URI: " + uri);
             }
-            return null;
+            return ProductEntry.CONTENT_URI;
         }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            super.onPostExecute(uri);
+            getContentResolver().notifyChange(uri, null);
+        }
+
 
     }
 
@@ -381,5 +423,40 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     public void onLoaderReset(Loader<Cursor> loader) {
         mCursorAdapter.swapCursor(null);
 
+    }
+
+    public class MyUndoListener implements View.OnClickListener {
+        ArrayList<Cursor> cursors = null;
+
+        public MyUndoListener(ArrayList<Cursor> cursors) {
+            this.cursors = cursors;
+
+        }
+
+        @Override
+        public void onClick(View v) {
+            ArrayList<ContentValues> values = new ArrayList<>();
+            for (Cursor cursor : cursors) {
+                values.add(extractFromCursor(cursor));
+            }
+            new InventoryAsyncTask().execute(values);
+        }
+
+        private ContentValues extractFromCursor(Cursor cursor) {
+
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(ProductEntry._ID));
+
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(ProductEntry.COLUMN_NAME));
+
+            int quantity = cursor.getInt(cursor.getColumnIndexOrThrow(ProductEntry.COLUMN_QUANTITY));
+
+            int price = cursor.getInt(cursor.getColumnIndexOrThrow(ProductEntry.COLUMN_PRICE));
+
+            String supplier = cursor.getString(cursor.getColumnIndexOrThrow(ProductEntry.COLUMN_SUPPLIER));
+
+            byte[] image = cursor.getBlob(cursor.getColumnIndexOrThrow(ProductEntry.COLUMN_IMAGE));
+            cursor.close();
+            return getContentValues(id, name, quantity, price, supplier, image);
+        }
     }
 }

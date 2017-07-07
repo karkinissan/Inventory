@@ -154,12 +154,21 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 return true;
             case android.R.id.home:
                 if (!hasProductChanged) {
+                    if (getIntent().getExtras()==null){
+                        Intent intent = new Intent(EditorActivity.this,CatalogActivity.class);
+                        startActivity(intent);
+                        return true;
+                    }
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     return true;
                 }
                 showUnsavedChangesDialog(new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        if (getIntent().getExtras()==null){
+                            Intent intent = new Intent(EditorActivity.this,CatalogActivity.class);
+                            startActivity(intent);
+                        }
                         NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     }
                 });
@@ -192,7 +201,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
 
         String supplier = mSupplierView.getText().toString().trim();
-        byte[] imageStream = imageStream = DbBitmapUtility.getBitmapAsByteArray(mImageThumbnail);
+        byte[] imageStream = null;
+        if (mImageThumbnail!=null) {
+           imageStream = DbBitmapUtility.getBitmapAsByteArray(mImageThumbnail);
+        }
         values.put(ProductEntry.COLUMN_NAME, productName);
         values.put(ProductEntry.COLUMN_PRICE, productPrice);
         values.put(ProductEntry.COLUMN_QUANTITY, productQuantity);
@@ -216,6 +228,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 Toast.makeText(this, "Product update Failed", Toast.LENGTH_SHORT).show();
                 Log.v(LOG_TAG, "Product update Failed. URI: " + mCurrentProductUri);
             }
+        }
+        if (getIntent().getExtras()==null){
+            Intent intent = new Intent(EditorActivity.this,CatalogActivity.class);
+            startActivity(intent);
         }
         finish();
     }

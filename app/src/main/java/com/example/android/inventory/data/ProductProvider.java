@@ -84,13 +84,14 @@ public class ProductProvider extends ContentProvider {
 
     private Uri insertPet(Uri uri, ContentValues values) {
         SQLiteDatabase db = mProductDbHelper.getWritableDatabase();
-        Log.v(LOG_TAG, "Image :" + values.get(ProductEntry.COLUMN_IMAGE));
+//        Log.v(LOG_TAG, "Image :" + values.get(ProductEntry.COLUMN_IMAGE));
+//        Log.v(LOG_TAG, "ID :" + values.get(ProductEntry._ID));
         long newRowId = db.insert(ProductEntry.TABLE_NAME, null, values);
         if (newRowId == -1) {
             Log.e(LOG_TAG, "Failed to insert new row for URI: " + uri);
             return null;
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(ProductEntry.CONTENT_URI, null);
         return ContentUris.withAppendedId(uri, newRowId);
 
     }
