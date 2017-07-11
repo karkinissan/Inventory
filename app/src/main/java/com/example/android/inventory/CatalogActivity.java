@@ -17,29 +17,32 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import com.example.android.inventory.data.ProductContract.ProductEntry;
 import com.example.android.inventory.data.ProductInsertionLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+import static com.example.android.inventory.data.ProductContract.ProductEntry;
+
+public class CatalogActivity extends AppCompatActivity implements
+        LoaderManager.LoaderCallbacks<Cursor>, ProductAdapter.ProductAdapterOnClickHandler {
     private static final String LOG_TAG = CatalogActivity.class.getSimpleName();
     private ProductCursorAdapter mCursorAdapter;
     private static final int URL_LOADER = 0;
     private static final int INSERT_DUMMY_DATA_ID = 1;
     private Uri mCurrentProductUri;
     private ArrayList<ContentValues> mValues;
+    private ProductAdapter mAdapter;
+    private RecyclerView mRecyclerView;
+    private TextView emptyView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,21 +58,31 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             }
         });
 
-        final ListView listView = (ListView) findViewById(R.id.list_view_product);
-        TextView textView = (TextView) findViewById(R.id.empty_view);
-        listView.setEmptyView(textView);
-        mCursorAdapter = new ProductCursorAdapter(this, null, getContentResolver());
-        listView.setAdapter(mCursorAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
-                Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
-                intent.setData(currentProductUri);
-                intent.putExtra("edit", true);
-                startActivity(intent);
-            }
-        });
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_product);
+        emptyView = (TextView) findViewById(R.id.empty_view);
+
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(layoutManager);
+        mRecyclerView.setHasFixedSize(true);
+        mAdapter = new ProductAdapter(this, CatalogActivity.this, this, getContentResolver());
+        mRecyclerView.setAdapter(mAdapter);
+
+//        final ListView listView = (ListView) findViewById(R.id.list_view_product);
+//        TextView textView = (TextView) findViewById(R.id.empty_view);
+//        listView.setEmptyView(textView);
+//        mCursorAdapter = new ProductCursorAdapter(this, null, getContentResolver());
+//        listView.setAdapter(mCursorAdapter);
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+//                Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
+//                intent.setData(currentProductUri);
+//                intent.putExtra("edit", true);
+//                startActivity(intent);
+//            }
+//        });
 
 //        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 //            @Override
@@ -82,71 +95,73 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 //        });
 
         //Adding batch contextual menus.
-        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-        listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
-            int itemsSelectedCount = 0;
-
-            @Override
-            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-                //What to do when an item is selected or unselected.
-                if (checked) {
-                    if (itemsSelectedCount < listView.getAdapter().getCount()) {
-                        itemsSelectedCount++;
-                    }
-                } else if (itemsSelectedCount > 0) {
-                    itemsSelectedCount--;
-                }
-                //set the title to reflect the number of items selected.
-                mode.setTitle(itemsSelectedCount + " selected");
-            }
-
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                itemsSelectedCount = 0;
-                mode.getMenuInflater().inflate(R.menu.contextual_action_mode_menu, menu);
-                return true;
-            }
-
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-
-                return false;
-            }
-
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.context_delete_product:
-                        long[] checkedItemIds = listView.getCheckedItemIds();
-                        showMultipleDeleteConfirmationDialog(checkedItemIds);
-                        return true;
-                    case R.id.select_all:
-                        if (itemsSelectedCount < listView.getAdapter().getCount()) {
-                            for (int i = 0; i < listView.getAdapter().getCount(); i++) {
-                                listView.setItemChecked(i, true);
-                            }
-                        }
-                        return true;
-                    default:
-                        return false;
-                }
-            }
-
-            @Override
-            public void onDestroyActionMode(ActionMode mode) {
-
-            }
-
-        });
+//        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+//        listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+//            int itemsSelectedCount = 0;
+//
+//            @Override
+//            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+//                //What to do when an item is selected or unselected.
+//                if (checked) {
+//                    if (itemsSelectedCount < listView.getAdapter().getCount()) {
+//                        itemsSelectedCount++;
+//                    }
+//                } else if (itemsSelectedCount > 0) {
+//                    itemsSelectedCount--;
+//                }
+//                //set the title to reflect the number of items selected.
+//                mode.setTitle(itemsSelectedCount + " selected");
+//            }
+//
+//            @Override
+//            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+//                itemsSelectedCount = 0;
+//                mode.getMenuInflater().inflate(R.menu.contextual_action_mode_menu, menu);
+//                return true;
+//            }
+//
+//            @Override
+//            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+//
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+//                switch (item.getItemId()) {
+//                    case R.id.context_delete_product:
+//                        long[] checkedItemIds = listView.getCheckedItemIds();
+//                        showMultipleDeleteConfirmationDialog(checkedItemIds);
+//                        return true;
+//                    case R.id.select_all:
+//                        if (itemsSelectedCount < listView.getAdapter().getCount()) {
+//                            for (int i = 0; i < listView.getAdapter().getCount(); i++) {
+//                                listView.setItemChecked(i, true);
+//                            }
+//                        }
+//                        return true;
+//                    default:
+//                        return false;
+//                }
+//            }
+//
+//            @Override
+//            public void onDestroyActionMode(ActionMode mode) {
+//
+//            }
+//
+//        });
         getLoaderManager().initLoader(URL_LOADER, null, CatalogActivity.this);
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-
+    public void onClick(long itemId) {
+        Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+        Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, itemId);
+        intent.setData(currentProductUri);
+        intent.putExtra("edit", true);
+        startActivity(intent);
     }
-
 
 //    @Override
 //    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
@@ -363,6 +378,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         return true;
     }
 
+
     private class InventoryAsyncTask extends AsyncTask<ArrayList<ContentValues>, Void, Uri> {
 
         @Override
@@ -385,6 +401,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.v(LOG_TAG, "onCreateLoader");
         switch (id) {
             case URL_LOADER:
                 String[] projection = {
@@ -414,15 +431,26 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.v(LOG_TAG, "onLoadFinished");
+
         if (loader.getId() == URL_LOADER) {
-            mCursorAdapter.swapCursor(data);
+//            mCursorAdapter.swapCursor(data);
+            if (data != null && data.getCount() == 0) {
+                mRecyclerView.setVisibility(View.GONE);
+                emptyView.setVisibility(View.VISIBLE);
+            } else if (data != null && data.getCount() > 0) {
+                mRecyclerView.setVisibility(View.VISIBLE);
+                emptyView.setVisibility(View.GONE);
+            }
+            mAdapter.swapCursor(data);
         } else return;
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mCursorAdapter.swapCursor(null);
+        Log.v(LOG_TAG, "onLoaderReset");
 
+        mAdapter.swapCursor(null);
     }
 
     public class MyUndoListener implements View.OnClickListener {

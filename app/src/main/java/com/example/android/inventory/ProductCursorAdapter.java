@@ -23,7 +23,7 @@ import com.example.android.inventory.data.ProductContract.ProductEntry;
  * Created by Nissan on 6/26/2017.
  */
 
-public class ProductCursorAdapter extends CursorAdapter {
+public class ProductCursorAdapter extends CursorAdapter{
 
     private static final String LOG_TAG = ProductCursorAdapter.class.getSimpleName();
     protected ContentResolver contentResolver;
